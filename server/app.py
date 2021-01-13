@@ -17,7 +17,7 @@ from base64 import encodebytes
 # from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:12345@postgres/user-login-inforamation'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:12345@postgres/user-login-inforamation1'
 db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'secretkey'
