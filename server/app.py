@@ -193,7 +193,9 @@ def send_profile_information():
 
 @app.route('/crdb', methods=['GET'])
 def create_databases():
-    db.create_all()
+  #  db.create_all()
+    return jsonify({'massage': "hi"})
+
 
 
 
