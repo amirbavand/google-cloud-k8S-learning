@@ -1,3 +1,4 @@
+kubectl delete pod --all
 docker build -t ahbavand/python-client:latest -t ahbavand/python-client:$SHA -f ./client/Dockerfile ./client
 docker build -t ahbavand/python-server:latest -t ahbavand/python-server:$SHA -f ./server/Dockerfile ./server
 
