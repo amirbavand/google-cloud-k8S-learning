@@ -1,7 +1,7 @@
-language: python
-
-python:
-  - "2.7"
-
-script:
-  - echo "Hi"
+sudo: required
+services:
+  - docker
+env:
+  global:
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
