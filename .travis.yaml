@@ -7,3 +7,6 @@ env:
     - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+script:
+  - echo "Hi"
