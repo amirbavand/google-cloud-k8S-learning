@@ -17,7 +17,7 @@ from base64 import encodebytes
 # from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:12345@db/user-login-inforamation'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:12345@postgres/user-login-inforamation'
 db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'secretkey'
@@ -190,6 +190,11 @@ def send_profile_information():
         image_array.append(encoded_img)
 
     return jsonify({'massage': image_array})
+
+@app.route('/crdb', methods=['GET'])
+def create_database():
+    db.create_all()
+
 
 
 if __name__ == '__main__':
