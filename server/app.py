@@ -82,7 +82,7 @@ def create_user():
 
     if(current_user):
         return jsonify({'massage': "user already exists."}), 409
- #   else:
+    else:
  #       os.mkdir('/app/image-repository/'+data['userName'])
 
  #       os.mkdir('/app/image-repository/'+data['userName']+'/public-preview')
