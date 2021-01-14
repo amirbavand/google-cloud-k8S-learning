@@ -12,11 +12,19 @@ spec:
       labels:
         component: server
     spec:
+      volumes:
+        - name: picture-storage
+          persistentVolumeClaim:
+            claimName: filestorage-persistent-volume-claim
       containers:
         - name: server
           image: ahbavand/python-server
           ports:
             - containerPort: 5000
+          volumeMounts:
+            - name: picture-storage
+              mountPath: /pictures
+              subPath: pictures
           env:
             - name: PGUSER
               value: postgres
