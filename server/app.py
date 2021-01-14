@@ -82,13 +82,13 @@ def create_user():
 
     if(current_user):
         return jsonify({'massage': "user already exists."}), 409
-    else:
-        os.mkdir('/app/image-repository/'+data['userName'])
+ #   else:
+ #       os.mkdir('/app/image-repository/'+data['userName'])
 
-        os.mkdir('/app/image-repository/'+data['userName']+'/public-preview')
-        os.mkdir('/app/image-repository/'+data['userName']+'/private-preview')
-        os.mkdir('/app/image-repository/'+data['userName']+'/original-images')
-        os.mkdir('/app/image-repository/'+data['userName']+'/deleted-images')
+ #       os.mkdir('/app/image-repository/'+data['userName']+'/public-preview')
+ #       os.mkdir('/app/image-repository/'+data['userName']+'/private-preview')
+ #       os.mkdir('/app/image-repository/'+data['userName']+'/original-images')
+ #       os.mkdir('/app/image-repository/'+data['userName']+'/deleted-images')
 
         hashed_password = generate_password_hash(
             data['password'], method='sha256')
@@ -192,7 +192,7 @@ def send_profile_information():
     return jsonify({'massage': image_array})
 
 @app.route('/crdb', methods=['GET'])
-def create_databases():
+def create_database():
     db.create_all()
     return jsonify({'massage': "hi"})
 
