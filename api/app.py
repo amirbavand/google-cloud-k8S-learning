@@ -17,7 +17,7 @@ import string
 # from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:12345@postgres-cluster-ip-service/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:12345@db/user-login-inforamation'
 db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'secretkey'
