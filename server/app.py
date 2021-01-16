@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_file
 import jwt
 import datetime
 import os
@@ -7,17 +7,17 @@ from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from PIL import Image as im
-import random
-import string
+from PIL import Image as pilim
 import io
 from base64 import encodebytes
+import random
+import string
 
 
 # from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:12345@postgres-cluster-ip-service/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:12345@db/user-login-inforamation'
 db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'secretkey'
@@ -32,10 +32,10 @@ class User(db.Model):
     isPublic = db.Column(db.Boolean)
 
 
-class Image(db.Model):
+class ImageProduct(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     userName = db.Column(db.String(50))
-    name = db.Column(db.String(80))
+    name = db.Column(db.String(80), unique=True)
     caption = db.Column(db.String(1000))
     isPublic = db.Column(db.Boolean)
 
@@ -43,7 +43,8 @@ class Image(db.Model):
 class DeletedImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     userName = db.Column(db.String(50))
-    name = db.Column(db.String(80))
+    imageProduct = db.Column(db.String(80))
+    name = db.Column(db.String(80),  unique=True)
     caption = db.Column(db.String(1000))
 
 
@@ -79,21 +80,25 @@ def token_required(f):
 def create_user():
     data = request.get_json()
     current_user = User.query.filter_by(userName=data['userName']).first()
+    user_name = (data['userName']).strip()
+    if(data['isPublic'] == True):
+        is_public = True
+    else:
+        is_public = False
 
     if(current_user):
         return jsonify({'massage': "user already exists."}), 409
     else:
- #       os.mkdir('/app/image-repository/'+data['userName'])
+        os.mkdir('/app/image-repository/users/'+user_name)
 
- #       os.mkdir('/app/image-repository/'+data['userName']+'/public-preview')
- #       os.mkdir('/app/image-repository/'+data['userName']+'/private-preview')
- #       os.mkdir('/app/image-repository/'+data['userName']+'/original-images')
- #       os.mkdir('/app/image-repository/'+data['userName']+'/deleted-images')
+        os.mkdir('/app/image-repository/users/'+user_name+'/public-preview')
+        os.mkdir('/app/image-repository/users/'+user_name+'/private-preview')
+        os.mkdir('/app/image-repository/users/'+user_name+'/original-images')
 
         hashed_password = generate_password_hash(
             data['password'], method='sha256')
-        new_user = User(userName=data['userName'],
-                        password=hashed_password, isPublic=True)
+        new_user = User(userName=user_name,
+                        password=hashed_password, isPublic=is_public)
         db.session.add(new_user)
         db.session.commit()
         return jsonify({'massage': "user successfully created"})
@@ -122,81 +127,284 @@ def check_access(current_user):
 
 
 @app.route('/upload', methods=['POST'])
-def add_imagee():
-    images = request.files.getlist('myImage')
-    for im in images:
-        fileName = im.filename
-        im.save('/app/image-repository/admin' +
-                '/'+'private-preview/'+fileName)
-
-#    return jsonify({'massage': "hiiiiiii"})
-
-    return jsonify({'massage': str(len(images))})
-
-
-@ app.route('/uploadd', methods=['POST'])
 @ token_required
-def add_image(current_user):
-
-    images = request.files['myImage']
-    caption = request.form['imageCaption']
-    fileName = request.form['myImageName']
+def add_imagee(current_user):
+    user_name = current_user.userName
+    letters = string.ascii_letters
+    product_name = (''.join(random.choice(letters) for i in range(16)))
+    filenames = []
     if(request.form['isPrivate'] == 'true'):
-        isPrivate = True
+        is_public = False
     else:
-        isPrivate = False
-    imageExists = Image.query.filter_by(
-        userName=current_user.userName, name=fileName).first()
-    if imageExists:
-        return jsonify({'massage': "the file with this name already exists"}), 403
-    else:
+        is_public = True
 
-        image.save(os.path.join('/app/image-repository/' +
-                                current_user.userName+'/'+'original-images', fileName))
-        img = im.open('/app/image-repository/'+current_user.userName +
-                      '/'+'original-images/'+fileName)
-        img.thumbnail([1024, 1024])
-    # img = img.convert('RGB')
-        # the bellow should be jpg
-        if(isPrivate):
-            img.save('/app/image-repository/'+current_user.userName +
-                     '/'+'private-preview/'+fileName)
+    images = request.files.getlist('myImage')
+    image_caption = request.form['imageCaption']
+
+    if(len(images) > 0):
+        os.mkdir('/app/image-repository/users/'+user_name +
+                 '/'+'original-images/'+product_name)
+        if(not is_public):
+            os.mkdir('/app/image-repository/users/'+user_name +
+                     '/'+'private-preview/'+product_name)
         else:
-            img.save('/app/image-repository/'+current_user.userName +
-                     '/'+'public-preview/'+fileName)
-        new_image = Image(userName=current_user.userName,
-                          name=fileName, caption=caption, isPublic=not isPrivate)
-        db.session.add(new_image)
+            os.mkdir('/app/image-repository/users/'+user_name +
+                     '/'+'public-preview/'+product_name)
+
+        new_image_product = ImageProduct(userName=user_name,
+                                         name=product_name, caption=image_caption, isPublic=is_public)
+        db.session.add(new_image_product)
         db.session.commit()
 
-        return jsonify({'massage': str(isPrivate)})
+        for im in images:
+
+            image_name = (''.join(random.choice(letters) for i in range(16)))
+            fileName = im.filename
+            filenames.append(fileName)
+
+            im.save('/app/image-repository/users/'+user_name +
+                    '/'+'original-images/'+product_name+'/'+image_name+".png")
+            img = pilim.open('/app/image-repository/users/'+user_name +
+                             '/'+'original-images/'+product_name+'/'+image_name+".png")
+            img.thumbnail([800, 800])
+
+            if(not is_public):
+
+                img.save('/app/image-repository/users/'+user_name +
+                         '/'+'private-preview/'+product_name+'/'+image_name+".png")
+            else:
+
+                img.save('/app/image-repository/users/'+user_name +
+                         '/'+'public-preview/'+product_name+'/'+image_name+".png")
+
+        return jsonify({'massage': "successfuly uploaded to the  server"})
+
+    else:
+        return jsonify({'massage': "No image has been selected"})
+
+    return jsonify({'massage': "hi"})
 
 
 @app.route('/profile', methods=['GET'])
-# @token_required
-# def send_profile_information(current_user):
-def send_profile_information():
+@token_required
+def send_profile_information(current_user):
     image_array = []
 
-    arr = os.listdir('/app/image-repository/admin/private-preview')
-    for image_path in arr:
-        pil_img = im.open('/app/image-repository/admin/private-preview/' +
-                          image_path, mode='r')  # reads the PIL image
+    data = request.headers
+    user_name = current_user.userName
+    profile_user_name = (data['profileUserName'])
+    if(user_name != profile_user_name):
+        requested_profile_user = User.query.filter_by(
+            userName=profile_user_name).first()
+        if(not requested_profile_user):
+            return jsonify({'massage': "this account does not exist"}), 400
+
+        if(requested_profile_user.isPublic == False):
+            # did not check this path
+            return jsonify({'massage': "this account is private"})
+        else:
+            try:
+                os.remove('/app/image-repository/users/' +
+                          profile_user_name+'/public-preview/.DS_Store')
+            except:
+                pass
+
+            product_keys = os.listdir(
+                '/app/image-repository/users/'+profile_user_name+'/public-preview')
+            for product in product_keys:
+                if(not product.endswith('.DS_Store')):
+
+                    product_images_list = os.listdir('/app/image-repository/users/'
+                                                     + profile_user_name
+                                                     + '/public-preview/'
+                                                     + product)  # reads the PIL image
+                    if(True):
+                        #            return jsonify({"massage": product_images_list})
+                        product_image_to_preview_name = product_images_list[0]
+                        if(product_image_to_preview_name.endswith('.DS_Store')):
+                            product_image_to_preview_name = product_images_list[0]
+
+                        pil_img = pilim.open('/app/image-repository/users/'
+                                             + profile_user_name
+                                             + '/public-preview/'
+                                             + product+'/' +
+                                             product_image_to_preview_name, mode='r')  # reads the PIL image
+                        byte_arr = io.BytesIO()
+
+        # convert the PIL image to byte array
+                        pil_img.save(byte_arr, format='PNG')
+                        encoded_img = encodebytes(byte_arr.getvalue()).decode(
+                            'ascii')  # encode as base64
+                        image_array.append(encoded_img)
+
+                    else:
+                        return jsonify({'massage': "could not handle"})
+
+            return jsonify({'product_keys': product_keys, 'image_preview_list': image_array, 'massage': "successfull"})
+    else:
+
+        product_keys = os.listdir(
+            '/app/image-repository/users/'+profile_user_name+'/public-preview')
+        for product in product_keys:
+            if(not product.endswith('.DS_Store')):
+
+                product_images_list = os.listdir('/app/image-repository/users/'
+                                                 + profile_user_name
+                                                 + '/public-preview/'
+                                                 + product)  # reads the PIL image
+                try:
+                    #            return jsonify({"massage": product_images_list})
+                    product_image_to_preview_name = product_images_list[0]
+
+                    pil_img = pilim.open('/app/image-repository/users/'
+                                         + profile_user_name
+                                         + '/public-preview/'
+                                         + product+'/' +
+                                         product_image_to_preview_name, mode='r')  # reads the PIL image
+                    byte_arr = io.BytesIO()
+
+        # convert the PIL image to byte array
+                    pil_img.save(byte_arr, format='PNG')
+                    encoded_img = encodebytes(byte_arr.getvalue()).decode(
+                        'ascii')  # encode as base64
+                    image_array.append(encoded_img)
+                except:
+                    return jsonify({"massage": "could not do that"}), 407
+
+        product_keys_private = os.listdir(
+            '/app/image-repository/users/'+profile_user_name+'/private-preview')
+        for product in product_keys_private:
+            if(not product.endswith('.DS_Store')):
+
+                product_images_list = os.listdir('/app/image-repository/users/'
+                                                 + profile_user_name
+                                                 + '/private-preview/'
+                                                 + product)  # reads the PIL image
+                try:
+                    #            return jsonify({"massage": product_images_list})
+                    product_image_to_preview_name = product_images_list[0]
+
+                    pil_img = pilim.open('/app/image-repository/users/'
+                                         + profile_user_name
+                                         + '/private-preview/'
+                                         + product+'/' +
+                                         product_image_to_preview_name, mode='r')  # reads the PIL image
+                    byte_arr = io.BytesIO()
+
+        # convert the PIL image to byte array
+                    pil_img.save(byte_arr, format='PNG')
+                    encoded_img = encodebytes(byte_arr.getvalue()).decode(
+                        'ascii')  # encode as base64
+                    image_array.append(encoded_img)
+                except:
+                    return jsonify({"massage": "could not do that"}), 407
+
+        return jsonify({'product_keys': product_keys+product_keys_private, 'image_preview_list': image_array, 'massage': "successfull"})
+
+
+@ app.route('/productprofile', methods=['GET'])
+@ token_required
+def send_product_information(current_user):
+    image_array = []
+    data = request.headers
+    user_name = current_user.userName
+    product_name = (data['productId'])
+    requested_product_profile = ImageProduct.query.filter_by(
+        name=product_name).first()
+    requested_profile_user = User.query.filter_by(
+        userName=requested_product_profile.userName).first()
+
+    if(not requested_profile_user):
+        return jsonify("does not exist"), 410
+
+    if(not requested_product_profile):
+        return jsonify("does not exist"), 402
+
+    profile_user_name = requested_product_profile.userName
+    product_caption = requested_product_profile.caption
+
+    if(user_name != profile_user_name):
+        if(requested_profile_user.isPublic == False):
+            return jsonify({"massage": "do not have access to this product"}), 403
+
+        if(requested_product_profile.isPublic == False):
+            return jsonify({"massage": "do not have access to this product"}), 403
+
+    try:
+        os.remove('/app/image-repository/users/'
+                  + profile_user_name
+                  + '/public-preview/'
+                    + product_name+'/.DS_Store')
+    except:
+        pass
+
+    if(requested_product_profile.isPublic == True):
+        product_repository = '/public-preview/'
+    else:
+        product_repository = '/private-preview/'
+
+    product_images_list = os.listdir('/app/image-repository/users/'
+                                     + profile_user_name
+                                     + product_repository
+                                     + product_name)
+
+    for image in product_images_list:
+        pil_img = pilim.open('/app/image-repository/users/'
+                             + profile_user_name
+                             + product_repository
+                             + product_name+'/' +
+                             image, mode='r')  # reads the PIL image
         byte_arr = io.BytesIO()
-    # convert the PIL image to byte array
+        # convert the PIL image to byte array
         pil_img.save(byte_arr, format='PNG')
         encoded_img = encodebytes(byte_arr.getvalue()).decode(
             'ascii')  # encode as base64
         image_array.append(encoded_img)
 
-    return jsonify({'massage': image_array})
+    return jsonify({'image_keys': product_images_list, 'image_preview_list': image_array, 'product_caption': product_caption})
 
-@app.route('/crdb', methods=['GET'])
-def create_database():
+
+@ app.route('/originalphoto', methods=['GET'])
+@token_required
+def send_original_image(current_user):
+    data = request.headers
+    user_name = current_user.userName
+    product_name = (data['productId'])
+    image_name = (data['imageId'])
+    requested_product_profile = ImageProduct.query.filter_by(
+        name=product_name).first()
+    requested_profile_user = User.query.filter_by(
+        userName=requested_product_profile.userName).first()
+    if(not requested_profile_user or not requested_product_profile):
+        return jsonify("does not exist"), 410
+
+    profile_user_name = requested_product_profile.userName
+
+    if(user_name != profile_user_name):
+        if(requested_profile_user.isPublic == False):
+            return jsonify({"massage": "do not have access to this product"}), 403
+
+        if(requested_product_profile.isPublic == False):
+            return jsonify({"massage": "do not have access to this product"}), 403
+
+    pil_img = pilim.open('/app/image-repository/users/'
+                         + profile_user_name
+                         + '/original-images/'
+                         + product_name+'/' +
+                         image_name, mode='r')  # reads the PIL image
+    byte_arr = io.BytesIO()
+    # convert the PIL image to byte array
+    pil_img.save(byte_arr, format='PNG')
+    encoded_img = encodebytes(byte_arr.getvalue()).decode(
+        'ascii')  # encode as base64
+
+    return jsonify({"imagestr": encoded_img})
+
+
+@ app.route('/crdb', methods=['GET'])
+def cr_db():
     db.create_all()
-    return jsonify({'massage': "hi"})
-
-
+    return jsonify({'massage': "db created"})
 
 
 if __name__ == '__main__':

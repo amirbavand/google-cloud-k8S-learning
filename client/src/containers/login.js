@@ -42,18 +42,29 @@ class Login extends Component {
 
   render() {
 
- //   if(this.state.redirectToHome){
+    if(this.state.redirectToHome){
     
 
 
-  //    return <Redirect to="/home" />;
- //   }
+      return <Redirect to="/home" />;
+    }
     return (
       <div>
         <form  onSubmit={this.handleSubmit}>
+          <div>
+            Username:
           <input type="text" name="username" id="username" />
+
+          </div>
+          <div>
+            Password:
           <input type="password" name="password" id="password" />
+
+          </div>
+          <div>
           <input type="submit" value="Submit" />
+
+          </div>
         </form>
       <div>
           <h1>{this.state.index}</h1>

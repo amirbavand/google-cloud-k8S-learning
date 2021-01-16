@@ -7,7 +7,19 @@ class RegisterPage extends Component {
   state = {
     username: '',
     password: '',
+    isPublic: true,
+
   };
+
+  constructor(props) {
+    super(props);
+
+    this.onChangeCheck = this.onChangeCheck.bind(this);
+
+
+ 
+}
+
 
 
   handleSubmit = async (event) => {
@@ -16,10 +28,12 @@ class RegisterPage extends Component {
     const username=data.get('username');
     const password=data.get('password');
     const passwordConfirm=data.get('repeatPassword');
+    console.log(this.state.isPublic);
+    
     if(password==passwordConfirm){
         console.log("password_is_valid");
         try {
-          const values=await axios.post('api/register',{"userName": username, "password": password} );
+          const values=await axios.post('api/register',{"userName": username, "password": password, "isPublic":this.state.isPublic} );
     
         } catch (err) {
           console.log("the username already exists")
@@ -38,14 +52,15 @@ class RegisterPage extends Component {
   };
 
 
- 
+  onChangeCheck(e) {
+    this.state.isPublic=!this.state.isPublic;
+
+}
+
 
 
   render() {
-//    if(this.state.redirectToMainPage){
- //     console.log("salam");
- //     return <Redirect to="/home" />
- //   }
+
     return (
       <div>
         <form  onSubmit={this.handleSubmit}>
@@ -61,6 +76,9 @@ class RegisterPage extends Component {
                 password:
                 <input type="password" name="repeatPassword" id="repeatPassword" />
             </div>
+            is it a private account?
+                <input name="isPublic" type="checkbox"  onChange= {this.onChangeCheck} />
+
 
           <input type="submit" value="Submit" />
         </form>

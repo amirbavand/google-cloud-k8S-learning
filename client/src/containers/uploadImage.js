@@ -11,7 +11,8 @@ class UploadImage extends Component {
         caption: null,
         xtoken: null,
         isPrivate: false,
-        isPrivateeeee: false
+        isPrivateeeee: false,
+        status: ''
 
 
       };
@@ -39,25 +40,15 @@ class UploadImage extends Component {
         const formData = new FormData();
         console.log(this.state.files,"hiii");
 
-    //    formData.append('myImage',this.state.file);
         for (let i = 0; i < this.state.files.length; i++) {
             console.log("hiiiiiii");
             formData.append(`myImage`, this.state.files[i]);
     }
     
- //       formData.append('myImageName',this.state.isPrivateeeee);
 
-   //     formData.append('imageCaption',this.state.caption);
-   //     formData.append('isPrivate',this.state.isPrivate);
+        formData.append('imageCaption',this.state.caption);
+        formData.append('isPrivate',this.state.isPrivate);
 
-  //      console.log(formData.imageCaption);
- //       console.log(formData["imageCaption"]);
-
- //       console.log(formData.entries());
-
-
- //       console.log(this.state.caption,"fdkf;dl;lk");
- //       console.log("hiid;flgk;ldfgk");
 
 
         console.log(formData);
@@ -70,8 +61,11 @@ class UploadImage extends Component {
         axios.post("api/upload",formData,config)
         .then((response) => {
             console.log(response.data)
+            this.setState({status:"successfully uploaded"})
         //    alert("The file is successfully uploaded");
         }).catch((error) => {
+            this.setState({status:"error accourd"})
+
     });
 
 
@@ -104,16 +98,19 @@ class UploadImage extends Component {
 
     render() {
         return (
+         <div>
             <form onSubmit={this.onFormSubmit}>
                 <h1>File Upload</h1>
                 <input type="file" multiple name="myImage" onChange= {this.onChange} />
                 <input type="text" name="caption" onChange= {this.onChangeCaption}/>
-                is it a public image?
+                is it a private image?
                 <input name="isPublic" type="checkbox"  onChange= {this.onChangeCheck} />
 
 
                 <button type="submit">Upload</button>
             </form>
+            <h1>{this.state.status}</h1>
+          </div> 
         )
     }
 }

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom'
 
 
 
@@ -9,6 +10,12 @@ class Profile extends Component {
         ownProfile: false,
         checkStatus: false,
         file: null,
+        previewImagesList:[],
+        previewImagesKeyList:[],
+        productRoute: '',
+        clicked:false,
+        isPrivateAccount:''
+
 
 
 
@@ -16,8 +23,12 @@ class Profile extends Component {
 
     constructor(props) {
         super(props);
+        const token = localStorage.getItem('challange_token');
+        this.state.xtoken=token;
+
     
         this.checkLoggedIn = this.checkLoggedIn.bind(this);
+
     
     }
     
@@ -35,9 +46,36 @@ class Profile extends Component {
 
       async checkLoggedIn() {
         try {
-          const values = await axios.get('/api/profile',{ headers:{'x-access-token': this.state.xtoken}});
-          console.log(values.data.massage[0]);
-          this.setState({file: values.data.massage[0]});
+          const images_array=[];
+          const user_name = this.props.match.params.user_name;
+          console.log(user_name,"this is username");
+          console.log(this.state.xtoken);
+
+          const values = await axios.get('/api/profile',{ headers:{'x-access-token': this.state.xtoken, "profileUserName":user_name}});
+          if(values.data.massage=='this account is private'){
+            this.setState({isPrivateAccount:"this account is protected"});
+            return
+          }
+          console.log(values.data.product_keys);
+          console.log(values.data.image_preview_list);
+          const images=values.data.image_preview_list;
+          const f="data:image/png;base64,"
+          for(const image in images){
+            console.log(images[image]);
+            const res=f.concat(images[image]);
+            images_array.push(res)
+
+
+
+          }
+
+          
+          const keys=values.data.product_keys;
+          console.log("this is image",images);
+
+
+          this.setState({previewImagesList: images_array, previewImagesKeyList:  keys });
+
      //     this.state.checkStatus=true;
 
     
@@ -48,40 +86,39 @@ class Profile extends Component {
         
       }
 
-      myfunction(){
-          return true;
-      }
-    
 
 
     render() {
-   //     const d="iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
-        const d= this.state.file;
 
-        console.log(d);
-        const user_name = this.props.match.params.user_name;
-        const f="data:image/png;base64,"
-        const res=f.concat(d);
-        const arraying=[res,res];
+        const arraying=this.state.previewImagesList;
+        console.log("this is arraying",arraying);
 
         if(!this.state.checkStatus){
             return <h4>loading the page</h4>
           }
 
 
+
         return (
           <div>
-        <img src={res} />
         <ul className="list-group">
-            {arraying.map(arraying => (
-                <button onClick={this.myfunction} key={arraying}>
- //               <li className="list-group-item list-group-item-primary">
-  //      <           img src={arraying} />
-    //        </li>
+            {arraying.map((arraying,index) => (
+
+               <Link to={"/"+this.props.match.params.user_name+"/"+this.state.previewImagesKeyList[index]} key={this.state.previewImagesKeyList[index]}>
+
+                <button onClick={this.handleClick} >
+
+        <           img src={arraying } width="400" height="400"/>
             </button>
+            </Link>
+
 
             ) )},
         </ul>
+
+        <div>
+              {this.state.isPrivateAccount}
+        </div>
 
 
 

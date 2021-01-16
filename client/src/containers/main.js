@@ -45,7 +45,6 @@ class main extends Component {
   async checkLoggedIn() {
     try {
       const values = await axios.get('/api/',{ headers:{'x-access-token': this.state.xtoken}});
-      console.log(values,"this is values");
       this.state.loggedIn=true;
 
       return true;
