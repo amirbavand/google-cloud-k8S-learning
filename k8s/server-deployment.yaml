@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: server-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       component: server
@@ -23,7 +23,7 @@ spec:
             - containerPort: 5000
           volumeMounts:
             - name: picture-storage
-              mountPath: /pictures
+              mountPath: /app/image-repository
               subPath: pictures
           env:
             - name: PGUSER
