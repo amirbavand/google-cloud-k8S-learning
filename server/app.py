@@ -411,7 +411,7 @@ if __name__ == '__main__':
     print("hi")
  #   db.create_all()   # we have to do this line in the command line (in this case, in the docker container )
 
-  #  app.run(host='0.0.0.0', port=5000)
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
+  #  app.run()
 
   #  WSGIServer(('0.0.0.0', 5000), app).serve_forever()
