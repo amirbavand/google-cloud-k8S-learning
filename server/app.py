@@ -22,7 +22,7 @@ db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'secretkey'
 # app.config['UPLOAD_FOLDER'] = '/app/image-repo'
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 
 class User(db.Model):
@@ -115,7 +115,7 @@ def login_user():
         return make_response('could not verify', 401)
     if check_password_hash(user.password, auth.password):
         token = jwt.encode({'userName': user.userName, 'exp': datetime.datetime.utcnow(
-        )+datetime.timedelta(minutes=2)}, app.config['SECRET_KEY'])
+        )+datetime.timedelta(minutes=20)}, app.config['SECRET_KEY'])
         return jsonify({'token': token})
     return make_response('could not verify', 401)
 
