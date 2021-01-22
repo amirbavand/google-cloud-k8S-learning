@@ -12,6 +12,7 @@ import io
 from base64 import encodebytes
 import random
 import string
+import base64
 
 
 # from gevent.pywsgi import WSGIServer
@@ -22,7 +23,7 @@ db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'secretkey'
 # app.config['UPLOAD_FOLDER'] = '/app/image-repo'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 
 class User(db.Model):
@@ -224,17 +225,14 @@ def send_profile_information(current_user):
                         if(product_image_to_preview_name.endswith('.DS_Store')):
                             product_image_to_preview_name = product_images_list[0]
 
-                        pil_img = pilim.open('/app/image-repository/users/'
-                                             + profile_user_name
-                                             + '/public-preview/'
-                                             + product+'/' +
-                                             product_image_to_preview_name, mode='r')  # reads the PIL image
-                        byte_arr = io.BytesIO()
+                        with open('/app/image-repository/users/'
+                                  + profile_user_name
+                                  + '/public-preview/'
+                                  + product+'/' +
+                                  product_image_to_preview_name, "rb") as img_file:
+                            encoded_img = base64.b64encode(img_file.read())
+                        encoded_img = str(encoded_img, 'utf-8')
 
-        # convert the PIL image to byte array
-                        pil_img.save(byte_arr, format='PNG')
-                        encoded_img = encodebytes(byte_arr.getvalue()).decode(
-                            'ascii')  # encode as base64
                         image_array.append(encoded_img)
 
                     else:
@@ -253,20 +251,16 @@ def send_profile_information(current_user):
                                                  + '/public-preview/'
                                                  + product)  # reads the PIL image
                 try:
-                    #            return jsonify({"massage": product_images_list})
                     product_image_to_preview_name = product_images_list[0]
 
-                    pil_img = pilim.open('/app/image-repository/users/'
-                                         + profile_user_name
-                                         + '/public-preview/'
-                                         + product+'/' +
-                                         product_image_to_preview_name, mode='r')  # reads the PIL image
-                    byte_arr = io.BytesIO()
+                    with open('/app/image-repository/users/'
+                              + profile_user_name
+                              + '/public-preview/'
+                              + product+'/' +
+                              product_image_to_preview_name, "rb") as img_file:
+                        encoded_img = base64.b64encode(img_file.read())
+                    encoded_img = str(encoded_img, 'utf-8')
 
-        # convert the PIL image to byte array
-                    pil_img.save(byte_arr, format='PNG')
-                    encoded_img = encodebytes(byte_arr.getvalue()).decode(
-                        'ascii')  # encode as base64
                     image_array.append(encoded_img)
                 except:
                     return jsonify({"massage": "could not do that"}), 407
@@ -281,21 +275,18 @@ def send_profile_information(current_user):
                                                  + '/private-preview/'
                                                  + product)  # reads the PIL image
                 try:
-                    #            return jsonify({"massage": product_images_list})
                     product_image_to_preview_name = product_images_list[0]
 
-                    pil_img = pilim.open('/app/image-repository/users/'
-                                         + profile_user_name
-                                         + '/private-preview/'
-                                         + product+'/' +
-                                         product_image_to_preview_name, mode='r')  # reads the PIL image
-                    byte_arr = io.BytesIO()
+                    with open('/app/image-repository/users/'
+                              + profile_user_name
+                              + '/private-preview/'
+                              + product+'/' +
+                              product_image_to_preview_name, "rb") as img_file:
+                        encoded_img = base64.b64encode(img_file.read())
+                    encoded_img = str(encoded_img, 'utf-8')
 
-        # convert the PIL image to byte array
-                    pil_img.save(byte_arr, format='PNG')
-                    encoded_img = encodebytes(byte_arr.getvalue()).decode(
-                        'ascii')  # encode as base64
                     image_array.append(encoded_img)
+
                 except:
                     return jsonify({"massage": "could not do that"}), 407
 
@@ -349,17 +340,16 @@ def send_product_information(current_user):
                                      + product_name)
 
     for image in product_images_list:
-        pil_img = pilim.open('/app/image-repository/users/'
-                             + profile_user_name
-                             + product_repository
-                             + product_name+'/' +
-                             image, mode='r')  # reads the PIL image
-        byte_arr = io.BytesIO()
-        # convert the PIL image to byte array
-        pil_img.save(byte_arr, format='PNG')
-        encoded_img = encodebytes(byte_arr.getvalue()).decode(
-            'ascii')  # encode as base64
-        image_array.append(encoded_img)
+
+        with open('/app/image-repository/users/'
+                  + profile_user_name
+                  + product_repository
+                  + product_name+'/' +
+                  image, "rb") as img_file:
+            encoded_img = base64.b64encode(img_file.read())
+        encoded_img = str(encoded_img, 'utf-8')
+
+        image_array.append((encoded_img))
 
     return jsonify({'image_keys': product_images_list, 'image_preview_list': image_array, 'product_caption': product_caption})
 
@@ -387,18 +377,17 @@ def send_original_image(current_user):
         if(requested_product_profile.isPublic == False):
             return jsonify({"massage": "do not have access to this product"}), 403
 
-    pil_img = pilim.open('/app/image-repository/users/'
-                         + profile_user_name
-                         + '/original-images/'
-                         + product_name+'/' +
-                         image_name, mode='r')  # reads the PIL image
-    byte_arr = io.BytesIO()
-    # convert the PIL image to byte array
-    pil_img.save(byte_arr, format='PNG')
-    encoded_img = encodebytes(byte_arr.getvalue()).decode(
-        'ascii')  # encode as base64
+    with open('/app/image-repository/users/'
+              + profile_user_name
+              + '/original-images/'
+              + product_name+'/' +
+              image_name, "rb") as img_file:
+        encoded_img = base64.b64encode(img_file.read())
+    encoded_img = str(encoded_img, 'utf-8')
 
     return jsonify({"imagestr": encoded_img})
+
+  #  return jsonify({"imagestr": str(len(encoded_img))})
 
 
 @ app.route('/crdb', methods=['GET'])
